@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Flights.Common.RabbitMQ;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Text;
@@ -36,10 +37,9 @@ namespace Flights.Subscriber
 
             };
 
-            amqpChannel.BasicConsume("FlightsQueue", true, amqpMessageConsumer);
+            amqpChannel.BasicConsume(QueueNames.FlightsQueue.ToString(), true, amqpMessageConsumer);
 
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadKey();
+            Console.ReadLine();
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Flights.Domain
 {
     public class Flight
     {
-        public long FlightId { get; set; }
+        public Guid FlightId { get; set; }
         public string FlightNumber { get; set; }
         public string Airline { get; set; }
         public string Origin { get; set; }

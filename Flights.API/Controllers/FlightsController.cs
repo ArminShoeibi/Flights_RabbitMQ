@@ -1,6 +1,8 @@
-﻿using Flights.API.DTOs;
+﻿using Flights.Common.RabbitMQ;
+using Flights.Domain;
 using Microsoft.AspNetCore.Mvc;
 using RabbitMQ.Client;
+using System;
 using System.Text;
 using System.Text.Json;
 
@@ -28,12 +30,12 @@ namespace Flights.API.Controllers
         }
 
         [HttpPost("[action]")]
-        public IActionResult CreateFlight(CreateFlightDto createFlightDto)
+        public IActionResult CreateFlight(Flight flight)
         {
             /* Durability: (exchanges survive broker restart) */
             /* Auto-delete: (exchange is deleted when last queue is unbound from it) */
 
-            _amqpChannel.ExchangeDeclare("FlightsExchange",
+            _amqpChannel.ExchangeDeclare(ExchangeNames.FlightsExchange.ToString(),
                                          ExchangeType.Direct,
                                          true,
                                          true,
@@ -56,22 +58,24 @@ namespace Flights.API.Controllers
             /* Auto-delete (queue that has had at least one consumer is deleted when last consumer unsubscribes) */
 
 
-            _amqpChannel.QueueDeclare("FlightsQueue",
+            _amqpChannel.QueueDeclare(QueueNames.FlightsQueue.ToString(),
                                       true,
                                       false,
                                       false,
                                       null);
 
-            _amqpChannel.QueueBind("FlightsQueue",
-                                   "FlightsExchange",
-                                   "FLRK",
+            _amqpChannel.QueueBind(QueueNames.FlightsQueue.ToString(),
+                                   ExchangeNames.FlightsExchange.ToString(),
+                                   RoutingKeyNames.Flights.ToString(),
                                    null);
 
-            string createFlightDtoJson = JsonSerializer.Serialize(createFlightDto);
+            flight.FlightId = Guid.NewGuid();
+            flight.DateCreated = DateTimeOffset.Now;
+            string createFlightDtoJson = JsonSerializer.Serialize(flight);
             byte[] body = Encoding.UTF8.GetBytes(createFlightDtoJson);
 
-            _amqpChannel.BasicPublish("FlightsExchange",
-                                      "FLRK",
+            _amqpChannel.BasicPublish(ExchangeNames.FlightsExchange.ToString(),
+                                      RoutingKeyNames.Flights.ToString(),
                                       null,
                                       body);
 
